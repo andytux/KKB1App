@@ -27,6 +27,10 @@ namespace KKB1App.Data
             modelBuilder.Entity<Show>()
                 .HasIndex(s => s.DateStartTime)
                 .IsUnique();
+            
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.UserName)
+                .IsUnique();
         }
     }
 }
