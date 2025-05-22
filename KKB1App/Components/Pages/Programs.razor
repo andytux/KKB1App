@@ -1,0 +1,148 @@
+﻿@page "/programs"
+@using KKB1App.Data
+@using KKB1App.Data.Models
+@inject ProgramService ProgramService
+@inject ArtistService ArtistService
+
+<h3>Programme verwalten</h3>
+
+@if (!string.IsNullOrEmpty(Message))
+{
+    <p style="color:@(IsSuccess ? "green" : "red")">@Message</p>
+}
+
+<div style="max-width: 600px; margin-bottom: 2rem;">
+    <h4>Neues Programm erfassen</h4>
+
+    <div class="form-group mb-2">
+        <label>Titel</label>
+        <input class="form-control" @bind="NewProgram.Title" />
+    </div>
+
+    <div class="form-group mb-2">
+        <label>Beschreibung</label>
+        <textarea class="form-control" @bind="NewProgram.Description"></textarea>
+    </div>
+
+    <div class="form-group mb-2">
+        <label>Startdatum</label>
+        <input type="date" class="form-control" @bind="NewProgram.StartDate" />
+    </div>
+
+    <div class="form-group mb-2">
+        <label>Enddatum</label>
+        <input type="date" class="form-control" @bind="NewProgram.EndDate" />
+    </div>
+
+    <div class="form-group mb-2">
+        <label>Honorar (€)</label>
+        <input type="number" step="0.01" class="form-control" @bind="NewProgram.Fee" />
+    </div>
+
+    <div class="form-group mb-2">
+        <label>Zahlungsart</label>
+        <select class="form-control" @bind="NewProgram.PaymentMode">
+            @foreach (var mode in Enum.GetValues<Enums.PaymentMode>())
+            {
+                <option value="@mode">@mode</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Künstler</label>
+        <select class="form-control" @bind="NewProgram.ArtistId">
+            <option disabled selected value="">-- Bitte wählen --</option>
+            @foreach (var artist in AllArtists)
+            {
+                <option value="@artist.ArtistId">@artist.ArtistName</option>
+            }
+        </select>
+    </div>
+
+    <button class="btn btn-success" @onclick="AddProgram">Programm hinzufügen</button>
+</div>
+
+<hr />
+
+<h4>Alle Programme</h4>
+
+@if (AllPrograms == null)
+{
+    <p>Lade Programme...</p>
+}
+else if (AllPrograms.Count == 0)
+{
+    <p>Keine Programme vorhanden.</p>
+}
+else
+{
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Titel</th>
+                <th>Künstler</th>
+                <th>Laufzeit</th>
+                <th>Zahlung</th>
+                <th>Honorar</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var p in AllPrograms)
+            {
+                <tr>
+                    <td>@p.Title</td>
+                    <td>@p.Artist?.ArtistName</td>
+                    <td>@p.StartDate.ToShortDateString() – @p.EndDate.ToShortDateString()</td>
+                    <td>@p.PaymentMode</td>
+                    <td>@p.Fee €</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Artist> AllArtists = new();
+    private List<Data.Models.Program> AllPrograms = new();
+
+    private Data.Models.Program NewProgram = new()
+        {
+            StartDate = DateTime.Today,
+            EndDate = DateTime.Today.AddDays(1),
+            PaymentMode = Enums.PaymentMode.Prepaid
+        };
+
+    private string Message = string.Empty;
+    private bool IsSuccess = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AllArtists = await ArtistService.GetAllArtistsAsync();
+        AllPrograms = await ProgramService.GetAllProgramsAsync();
+    }
+
+    private async Task AddProgram()
+    {
+        if (string.IsNullOrWhiteSpace(NewProgram.Title) || NewProgram.ArtistId == 0)
+        {
+            Message = "Bitte alle Felder korrekt ausfüllen.";
+            IsSuccess = false;
+            return;
+        }
+
+        await ProgramService.AddProgramAsync(NewProgram);
+
+        Message = "Programm erfolgreich hinzugefügt.";
+        IsSuccess = true;
+
+        NewProgram = new()
+            {
+                StartDate = DateTime.Today,
+                EndDate = DateTime.Today.AddDays(1),
+                PaymentMode = Enums.PaymentMode.Prepaid
+            };
+
+        AllPrograms = await ProgramService.GetAllProgramsAsync();
+    }
+}
