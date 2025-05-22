@@ -1,8 +1,24 @@
 using KKB1App.Components;
+using KKB1App.Data;
+using KKB1App.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<AuthStateService>();
+builder.Services.AddScoped<ArtistService>();
+builder.Services.AddScoped<ProgramService>();
+builder.Services.AddScoped<ShowService>();
+builder.Services.AddScoped<StatisticService>();
+builder.Services.AddScoped<TicketHolderService>();
+builder.Services.AddScoped<TicketService>();
+
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
