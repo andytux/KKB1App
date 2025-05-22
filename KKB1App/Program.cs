@@ -40,4 +40,49 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
+
+
+app.MapGet("/statisticsapi/programs", async (AppDbContext db) =>
+{
+    var data = await db.Programs
+        .Include(p => p.Artist)
+        .Include(p => p.Shows)
+        .Select(p => new
+        {
+            ProgramTitle = p.Title,
+            Artist = p.Artist.ArtistName,
+            Shows = p.Shows
+                .OrderBy(s => s.DateTime)
+                .Select(s => new { s.DateTime, s.TicketPrice })
+        })
+        .ToListAsync();
+
+    return Results.Ok(data);
+});
+
+app.MapGet("/statisticsapi/topseller", async (AppDbContext db) =>
+{
+    var result = await db.Shows
+        .Include(s => s.Program)
+        .ThenInclude(p => p.Artist)
+        .Include(s => s.Tickets)
+        .GroupBy(s => new
+        {
+            s.ProgramId,
+            ProgramTitle = s.Program.Title,
+            Artist = s.Program.Artist.ArtistName
+        })
+        .Select(g => new
+        {
+            g.Key.ProgramTitle,
+            g.Key.Artist,
+            TotalTickets = g.SelectMany(s => s.Tickets).Count()
+        })
+        .OrderByDescending(x => x.TotalTickets)
+        .FirstOrDefaultAsync();
+
+    return Results.Ok(result);
+});
+
+
 app.Run();
