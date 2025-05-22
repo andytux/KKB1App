@@ -4,61 +4,77 @@ namespace KKB1App.Services
 {
     public class AuthStateService
     {
-        private readonly ProtectedSessionStorage protectedSessionStorage;
+        private readonly ProtectedSessionStorage storage;
 
-        public bool IsLoggedIn { get; set; }
-        public string? UserName { get; set; }
-        public Guid? UserId { get; set; }
+        public bool IsLoggedIn { get; set; } = false;
+        public string? UserName { get; set; } = null;
+        public Guid? UserId { get; set; } = null;
 
         public event Action? AuthStateChanged;
 
-        public AuthStateService(ProtectedSessionStorage protectedSessionStorage)
+        public AuthStateService(ProtectedSessionStorage storage)
         {
-            this.protectedSessionStorage = protectedSessionStorage;
+            this.storage = storage;
         }
 
-        public async Task Login(string userName, Guid userId)
+        /// <summary>
+        /// Initialisiert den Authorisationsstatus falls man die seite aktualisiert werden aus dem storage die values geladen
+        /// </summary>
+        /// <returns></returns>
+        public async Task InitializeAuthState()
+        {
+            var storedUserId = await storage.GetAsync<Guid>(nameof(UserId));
+            var storedUserName = await storage.GetAsync<string>(nameof(UserName));
+
+            if (storedUserId.Success && storedUserName.Success)
+            {
+                UserId = storedUserId.Value;
+                UserName = storedUserName.Value;
+                IsLoggedIn = true;
+
+                HandleAuthStateChanged();
+            }
+        }
+
+        /// <summary>
+        /// Loggt den User ein und speichert die values im Storage
+        /// </summary>
+        /// <param name="username"></param>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        public async Task Login(string username, Guid userId)
         {
             IsLoggedIn = true;
-            UserName = userName;
             UserId = userId;
+            UserName = username;
 
-            await protectedSessionStorage.SetAsync("UserName", UserName);
-            await protectedSessionStorage.SetAsync("UserId", UserId);
+            await storage.SetAsync(nameof(UserId), userId);
+            await storage.SetAsync(nameof(UserName), username);
 
-            HandleAuthState();
+            HandleAuthStateChanged();
         }
 
+        /// <summary>
+        /// Loggt den User aus und entfernt die values aus dem storage
+        /// </summary>
+        /// <returns></returns>
         public async Task Logout()
         {
             IsLoggedIn = false;
-            UserName= null;
             UserId = null;
+            UserName = null;
 
-            await protectedSessionStorage.DeleteAsync("UserName");
-            await protectedSessionStorage.DeleteAsync("UserId");
+            await storage.DeleteAsync(nameof(UserId));
+            await storage.DeleteAsync(nameof(UserName));
 
-            HandleAuthState();
+            HandleAuthStateChanged();
         }
 
-        private void HandleAuthState()
+        private void HandleAuthStateChanged()
         {
             AuthStateChanged?.Invoke();
         }
 
-        public async Task InitializeAuthState()
-        {
-            var storedUserName = await protectedSessionStorage.GetAsync<string>("UserName");
-            var storedUserId = await protectedSessionStorage.GetAsync<Guid>("UserId");
-
-            if(storedUserId.Success && storedUserName.Success)
-            {
-                UserName = storedUserName.Value;
-                UserId = storedUserId.Value;
-                IsLoggedIn = true;
-
-                HandleAuthState();
-            }
-        }
     }
 }
+

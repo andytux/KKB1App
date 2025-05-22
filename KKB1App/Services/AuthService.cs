@@ -1,25 +1,44 @@
-﻿using System.Security.Cryptography;
+﻿using KKB1App.Data.Models;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace KKB1App.Services
 {
     public class AuthService
     {
-        public string GetSaltOfGuid(Guid userId)
+        /// <summary>
+        /// Holt sich aus den ersten 8 zeichen das salz aus der Guid
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns>string salz</returns>
+        private string GetSaltOfGuid(Guid userId)
         {
             return userId.ToString().Substring(0, 8);
         }
 
-        private byte[] GetHashableBytes(string password, string salt)
+        /// <summary>
+        /// erstellt ein bytearry zum verhashen
+        /// </summary>
+        /// <param name="password"></param>
+        /// <param name="userId"></param>
+        /// <returns>byte[]</returns>
+        private byte[] GetHashableBytes(string password, Guid userId)
         {
+            var salt = GetSaltOfGuid(userId);
             var combined = password + salt;
 
             return Encoding.UTF8.GetBytes(combined);
         }
 
-        public string GetPasswordHash(string password, string salt)
+        /// <summary>
+        /// Verhascht das Password und gibt diesen zurück
+        /// </summary>
+        /// <param name="password"></param>
+        /// <param name="user"></param>
+        /// <returns>string - passworthash</returns>
+        public string GetPasswordHash(string password, User user)
         {
-            var hashableBytes = GetHashableBytes(password, salt);
+            var hashableBytes = GetHashableBytes(password, user.UserId);
 
             using (var sha256 = SHA256.Create())
             {
@@ -29,14 +48,22 @@ namespace KKB1App.Services
             }
         }
 
-        public bool VerifyPassword(string password, string storedHash, string salt)
-        {
-            var hashOfInput = GetPasswordHash(password, salt);
 
-            if(hashOfInput != storedHash)
+        /// <summary>
+        /// Passwortüberprüfung
+        /// </summary>
+        /// <param name="password"></param>
+        /// <param name="user"></param>
+        /// <returns>true = richtig; false = falsch</returns>
+        public bool VerifyPassword(string password, User user)
+        {
+            var hashOfInput = GetPasswordHash(password, user);
+
+            if (hashOfInput != user.PasswordHash)
             {
                 return false;
             }
+
             return true;
         }
     }

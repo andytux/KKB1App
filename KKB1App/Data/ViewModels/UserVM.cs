@@ -2,7 +2,7 @@
 
 namespace KKB1App.Data.ViewModels
 {
-    public class UserRegisterVM
+    public class UserVM
     {
         [Required]
         public string UserName { get; set; }
@@ -10,7 +10,6 @@ namespace KKB1App.Data.ViewModels
         [Required]
         public string Password { get; set; }
 
-        [Required]
         public string ConfirmPassword { get; set; }
     }
 }
