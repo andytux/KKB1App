@@ -1,19 +1,41 @@
 ﻿@inherits LayoutComponentBase
 
+@inject AuthStateService AuthStateService
+@inject NavigationManager NavManager
+
+
 <div class="page">
     <div class="sidebar">
         <NavMenu />
     </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+    @if (AuthStateInitialized)
+    {
+        <main>
+            <div class="top-row px-4">
+                @if (AuthStateService.IsLoggedIn)
+                {
+                    <div>
+                        <label class="mt-2">Logged in as: @AuthStateService.UserName</label>
+                        <button @onclick="Logout">Logout</button>
+                    </div>
+                }
+                else
+                {
+                    <button @onclick="GoToLogin">To Login</button>
+                }
+                <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            </div>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+            <article class="content px-4">
+                @Body
+            </article>
+        </main>
+    }
+    else
+    {
+        <InfoMessage Message="Initialize Authstate"></InfoMessage>
+    }
 </div>
 
 <div id="blazor-error-ui">
@@ -21,3 +43,35 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+
+@code {
+    private bool hasRendered = false;
+    private bool AuthStateInitialized = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !hasRendered)
+        {
+            hasRendered = true;
+            await AuthStateService.InitializeAuthState();
+            AuthStateInitialized = true;
+
+            StateHasChanged();
+        }
+
+        AuthStateService.AuthStateChanged += StateHasChanged;
+
+    }
+
+    private async Task Logout()
+    {
+        await AuthStateService.Logout();
+        NavManager.NavigateTo("/");
+    }
+
+    private void GoToLogin()
+    {
+        NavManager.NavigateTo("/login");
+    }
+}

@@ -21,7 +21,7 @@
             <option disabled selected value="0">-- Vorstellung wählen --</option>
             @foreach (var show in ActiveShows)
             {
-                <option value="@show.ShowId">@($"{show.ProgramTitle} ({show.DateTime:g})")</option>
+                <option value="@show.ShowId">@($"{show.ProgramTitle} ({show.DateStartTime:g})")</option>
             }
         </select>
     </div>
@@ -40,7 +40,7 @@
     <div class="form-group mb-2">
         <label>Sitznummer (1–25)</label>
         <select class="form-control" @bind="Ticket.SeatNumber">
-            <option disabled selected value="">-- Sitz wählen --</option>
+            <option disabled selected value="0">-- Sitz wählen --</option>
             @foreach (var seat in SeatNumbers)
             {
                 var seatKey = $"{Ticket.Row}-{seat}";
@@ -51,7 +51,7 @@
                 </option>
             }
         </select>
-        
+
     </div>
 
     <div class="form-group mb-2">
@@ -93,25 +93,30 @@
     {
         ActiveShows = (await ShowService.GetAllShowsAsync())
             .Where(s => s.IsActive)
-            .OrderBy(s => s.DateTime)
+            .OrderBy(s => s.DateStartTime)
             .ToList();
 
-                Ticket = new TicketSaleVM();
+        Ticket = new TicketSaleVM();
 
     }
 
     private async Task BuyTicket()
     {
+        if (Ticket.ShowId == 0)
+        {
+            Message = "Bitte wählen sie eine Vorstellung aus.";
+            return;
+        }
         if (string.IsNullOrWhiteSpace(Ticket.Row) || Ticket.SeatNumber < 1 || Ticket.SeatNumber > 25)
         {
-            Message = "Ungültiger Sitzplatz.";
+            Message = "Nicht gültiger Sitzplatz.";
             IsSuccess = false;
             return;
         }
 
         if (string.IsNullOrWhiteSpace(Ticket.FullName) || string.IsNullOrWhiteSpace(Ticket.Address))
         {
-            Message = "Name und Adresse sind Pflicht.";
+            Message = "Nicht befüllte Felder. Name und Adresse sind Pflicht.";
             IsSuccess = false;
             return;
         }
@@ -135,7 +140,7 @@
         }
         else
         {
-            Message = $"""Fehler: Sitzplatz "{Ticket.SeatNumber}" in Reihe: "{Ticket.Row}",  ist bereits vergeben!""";
+            Message = $"""Nicht möglich: Sitzplatz "{Ticket.SeatNumber}" in Reihe: "{Ticket.Row}",  ist bereits vergeben!""";
             IsSuccess = false;
         }
     }

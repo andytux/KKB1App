@@ -51,14 +51,14 @@
         //Feld überprüfung
         if (string.IsNullOrEmpty(User.UserName) || string.IsNullOrEmpty(User.Password) || string.IsNullOrEmpty(User.ConfirmPassword))
         {
-            Message = "Can't register, fill fields Username, Password or Confirm Password is missing.";
+            Message = "Nicht alle Felder sind befüllt.";
             return;
         }
 
         //Passwortübereinstimmung
         if (User.Password != User.ConfirmPassword)
         {
-            Message = "Can't register, Password and Confirm Password doesn't match.";
+            Message = "Registration nicht erfolgreich, Passwörter stimmen nicht überein.";
             return;
         }
 
@@ -66,7 +66,7 @@
 
         if (user != null)
         {
-            Message = "Can't login, Username or Password wrong.";
+            Message = "Benutzername oder Password sind nicht richtig.";
             return;
         }
 
@@ -79,7 +79,7 @@
 
         await UserService.AddUserAsync(user);
 
-        Message = "Registration successful, please login.";
+        Message = "Registration erfolgreich. Bitte loggen sie sich ein.";
 
         NavManager.NavigateTo($"/login/{user.UserName}/{Message}");
 

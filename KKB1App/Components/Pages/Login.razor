@@ -15,13 +15,13 @@
     <InfoMessage Message="@Message"></InfoMessage>
 
 
-    <InputField Label="Username"
-                PlaceHolder="Enter Username here..."
+    <InputField Label="Benutzername:"
+                PlaceHolder="Benutzernamen hier eingeben..."
                 @bind-Value="User.UserName">
 
     </InputField>
-    <InputField Label="Password"
-                PlaceHolder="Enter Password here..."
+    <InputField Label="Passwort:"
+                PlaceHolder="Passwort hier eingeben..."
                 @bind-Value="User.Password"
                 IsPassword="true"
                 ShowPassword="@ShowPassword">
@@ -61,14 +61,14 @@
         //Checkt ob felder ausgefüllt sind
         if (string.IsNullOrEmpty(User.UserName) || string.IsNullOrEmpty(User.Password))
         {
-            Message = "Can't login, fill fields Username and Password.";
+            Message = "Nicht alle Felder sind ausgefüllt.";
             return;
         }
         var user = await UserService.GetUserByNameAsync(User.UserName);
 
         if (user == null)
         {
-            Message = "Can't login, Username or Password wrong.";
+            Message = "Benutzername oder Password sind nicht richtig.";
             return;
         }
 
@@ -81,7 +81,7 @@
         }
         else
         {
-            Message = "Can't login, Username or Password wrong.";
+            Message = "Benutzername oder Password sind nicht richtig.";
             return;
         }
 

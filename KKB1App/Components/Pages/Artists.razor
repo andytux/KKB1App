@@ -3,52 +3,54 @@
 @inject ArtistService ArtistService
 
 <h3>Künstlerverwaltung</h3>
+<ProtectedPage>
 
-<InfoMessage Message="@Message"></InfoMessage>
+    <InfoMessage Message="@Message"></InfoMessage>
 
-<div style="max-width: 500px; margin-bottom: 2rem;">
-    <h4>Neuen Künstler anlegen</h4>
-    <div class="form-group mb-2">
-        <label for="artistName">Name des Künstlers</label>
-        <input class="form-control" id="artistName" @bind="NewArtistName" placeholder="z.B. Josef Hader" />
+    <div style="max-width: 500px; margin-bottom: 2rem;">
+        <h4>Neuen Künstler anlegen</h4>
+        <div class="form-group mb-2">
+            <label for="artistName">Name des Künstlers</label>
+            <input class="form-control" id="artistName" @bind="NewArtistName" placeholder="z.B. Josef Hader" />
+        </div>
+        <button class="btn btn-primary" @onclick="AddArtist">Künstler hinzufügen</button>
     </div>
-    <button class="btn btn-primary" @onclick="AddArtist">Künstler hinzufügen</button>
-</div>
 
-<hr />
+    <hr />
 
-<h4>Alle Künstler</h4>
+    <h4>Alle Künstler</h4>
 
-@if (AllArtists == null)
-{
-    <p>Lade Daten...</p>
-}
-else if (AllArtists.Count == 0)
-{
-    <p>Keine Künstler vorhanden.</p>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Anzahl Programme</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var artist in AllArtists)
-                {
+    @if (AllArtists == null)
+    {
+        <p>Lade Daten...</p>
+    }
+    else if (AllArtists.Count == 0)
+    {
+        <p>Keine Künstler vorhanden.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead>
                     <tr>
-                        <td>@artist.ArtistName</td>
-                        <td>@artist.Programs?.Count ?? 0</td>
+                        <th>Name</th>
+                        <th>Anzahl Programme</th>
                     </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
+                </thead>
+                <tbody>
+                    @foreach (var artist in AllArtists)
+                    {
+                        <tr>
+                            <td>@artist.ArtistName</td>
+                            <td>@(artist.Programs?.Count)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</ProtectedPage>
 
 @code {
     private string NewArtistName = string.Empty;
@@ -76,6 +78,7 @@ else
             };
 
         await ArtistService.AddArtistAsync(artist);
+
         Message = "Künstler erfolgreich hinzugefügt.";
         IsSuccess = true;
         NewArtistName = string.Empty;

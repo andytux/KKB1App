@@ -1,6 +1,8 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@inject AuthStateService AuthStateService
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">KKB1App</a>
+        <a class="navbar-brand" href="">W1N3App</a>
     </div>
 </div>
 
@@ -14,17 +16,72 @@
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
+        @if (AuthStateService.IsLoggedIn)
+        {
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="artists">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Künstler
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="programs">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Programme
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="shows">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Shows
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="ticketholders">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Käufer
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="statistics">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Statistiken
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="shows">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Shows
+                </NavLink>
+            </div>
+        }
+        else
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="tickets">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Tickets
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="register">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Register
+                </NavLink>
+            </div>
+
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="login">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> To Login
+                </NavLink>
+            </div>
+        }
     </nav>
 </div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        AuthStateService.AuthStateChanged += StateHasChanged;
+    }
+}
 

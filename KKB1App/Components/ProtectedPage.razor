@@ -1,0 +1,16 @@
+﻿@inject AuthStateService AuthStateService
+
+@if (AuthStateService.IsLoggedIn)
+{
+    @ChildContent
+}
+else
+{
+    <p>Bitte loggen sich sich auf der <a href="/login">Login</a>-Seite ein um die Seite anzuzeigen.</p>
+}
+
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+}

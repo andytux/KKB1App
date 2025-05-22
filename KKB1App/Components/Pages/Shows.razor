@@ -5,87 +5,97 @@
 @inject ProgramService ProgramService
 
 <h3>Vorstellungen verwalten</h3>
+<ProtectedPage>
 
-@if (!string.IsNullOrEmpty(Message))
-{
-    <p style="color:@(IsSuccess ? "green" : "red")">@Message</p>
-}
+    @if (!string.IsNullOrEmpty(Message))
+    {
+        <p style="color:@(IsSuccess ? "green" : "red")">@Message</p>
+    }
 
-<div style="max-width: 600px; margin-bottom: 2rem;">
-    <h4>Neue Vorstellung planen</h4>
+    <div style="max-width: 600px; margin-bottom: 2rem;">
+        <h4>Neue Vorstellung planen</h4>
 
-    <div class="form-group mb-2">
-        <label>Programm</label>
-        <select class="form-control" @bind="NewShow.ProgramId">
-            <option disabled selected value="">-- Programm wählen --</option>
-            @foreach (var p in Programs)
-            {
-                <option value="@p.ProgramId">@p.Title</option>
-            }
-        </select>
+        <div class="form-group mb-2">
+            <label>Programm</label>
+            <select class="form-control" @bind="NewShow.ProgramId">
+                <option disabled selected value="0">-- Programm wählen --</option>
+                @foreach (var p in Programs)
+                {
+                    <option value="@p.ProgramId">@p.Title</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-group mb-2">
+            <label>Datum und Uhrzeit</label>
+            <label>Von:</label>
+            <input type="datetime-local" step="300" class="form-control" @bind="ShowStartDateTime" />
+            <label>Bis:</label>
+            <input type="datetime-local" step="300" class="form-control" @bind="ShowEndDateTime" />
+        </div>
+
+        <div class="form-group mb-2">
+            <label>Ticketpreis (€)</label>
+            <input type="number" step="0.01" class="form-control" @bind="NewShow.TicketPrice" />
+        </div>
+
+        <div class="form-group mb-2">
+            <label>Status</label>
+            <input type="checkbox" @bind="NewShow.IsActive" /> Aktiv
+        </div>
+
+        <button class="btn btn-success" @onclick="AddShow">Vorstellung speichern</button>
     </div>
 
-    <div class="form-group mb-2">
-        <label>Datum und Uhrzeit</label>
-        <input type="datetime-local" class="form-control" @bind="ShowDateTime" />
-    </div>
+    <hr />
 
-    <div class="form-group mb-2">
-        <label>Ticketpreis (€)</label>
-        <input type="number" step="0.01" class="form-control" @bind="NewShow.TicketPrice" />
-    </div>
+    <h4>Geplante Vorstellungen</h4>
 
-    <div class="form-group mb-2">
-        <label>Status</label>
-        <input type="checkbox" @bind="NewShow.IsActive" /> Aktiv
-    </div>
-
-    <button class="btn btn-success" @onclick="AddShow">Vorstellung speichern</button>
-</div>
-
-<hr />
-
-<h4>Geplante Vorstellungen</h4>
-
-@if (AllShows == null)
-{
-    <p>Lade Vorstellungen...</p>
-}
-else if (AllShows.Count == 0)
-{
-    <p>Keine Vorstellungen geplant.</p>
-}
-else
-{
-    <table class="table table-bordered table-striped">
-        <thead>
-            <tr>
-                <th>Programm</th>
-                <th>Datum</th>
-                <th>Preis</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var show in AllShows)
-            {
+    @if (AllShows == null)
+    {
+        <p>Lade Vorstellungen...</p>
+    }
+    else if (AllShows.Count == 0)
+    {
+        <p>Keine Vorstellungen geplant.</p>
+    }
+    else
+    {
+        <table class="table table-bordered table-striped">
+            <thead>
                 <tr>
-                    <td>@show.ProgramTitle</td>
-                    <td>@show.DateTime.ToString("g")</td>
-                    <td>@show.TicketPrice €</td>
-                    <td>@(show.IsActive ? "Aktiv" : "Inaktiv")</td>
+                    <th>Programm</th>
+                    <th>Datum</th>
+                    <th>Preis</th>
+                    <th>Status</th>
                 </tr>
-            }
-        </tbody>
-    </table>
-}
+            </thead>
+            <tbody>
+                @foreach (var show in AllShows)
+                {
+                    <tr>
+                        <td>@show.ProgramTitle</td>
+                        <td>
+                            <p>von: @show.DateStartTime.ToString("g")</p>
+                            <br />
+                            <p>bis: @show.DateEndTime.ToString("g")</p>
+                        </td>
+                        <td>@show.TicketPrice €</td>
+                        <td>@(show.IsActive ? "Aktiv" : "Inaktiv")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</ProtectedPage>
 
 @code {
     private List<ShowVM> AllShows = new();
     private List<Data.Models.Program> Programs = new();
 
     private ShowVM NewShow = new();
-    private DateTime ShowDateTime = DateTime.Now;
+    private DateTime ShowStartDateTime = DateTime.Now;
+    private DateTime ShowEndDateTime = DateTime.Now.AddMinutes(90);
 
     private string Message = string.Empty;
     private bool IsSuccess = false;
@@ -93,23 +103,46 @@ else
     protected override async Task OnInitializedAsync()
     {
         Programs = await ProgramService.GetAllProgramsAsync();
-        await LoadShows();
+        try
+        {
+            await LoadShows();
+
+        }
+        catch (Exception ex)
+        {
+
+        }
     }
 
     private async Task LoadShows()
     {
-        AllShows = await ShowService.GetAllShowsAsync();
+        AllShows = (await ShowService.GetAllShowsAsync())
+                        .OrderBy(s => s.DateStartTime).ToList();
     }
 
     private async Task AddShow()
     {
+        NewShow.DateStartTime = ShowStartDateTime;
+        NewShow.DateEndTime = ShowEndDateTime;
+
+        if (NewShow.DateEndTime <= NewShow.DateStartTime)
+        {
+            Message = "Endzeit muss nach Startzeit liegen.";
+            IsSuccess = false;
+            return;
+        }
+
+
         var show = new Show
             {
                 ProgramId = NewShow.ProgramId,
-                DateTime = ShowDateTime,
+                DateStartTime = NewShow.DateStartTime,
+                DateEndTime = NewShow.DateEndTime,
                 TicketPrice = NewShow.TicketPrice,
                 IsActive = NewShow.IsActive
             };
+
+
 
         var success = await ShowService.AddShowAsync(show);
 
@@ -117,6 +150,12 @@ else
         {
             Message = "Vorstellung gespeichert.";
             IsSuccess = true;
+            NewShow.ProgramId = 0;
+            NewShow.DateStartTime = ShowStartDateTime;
+            NewShow.DateEndTime = ShowEndDateTime;
+            NewShow.TicketPrice = 0;
+            NewShow.IsActive = false;
+
             await LoadShows();
         }
         else

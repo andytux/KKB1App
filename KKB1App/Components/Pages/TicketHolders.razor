@@ -4,57 +4,67 @@
 
 @using KKB1App.Data.Models
 @using KKB1App.Data.ViewModels
+@using static KKB1App.Data.Enums
 
 <h3>Ticketinhaber anzeigen</h3>
+<ProtectedPage>
 
-<div class="form-group mb-3" style="max-width: 400px;">
-    <label>Vorstellung wählen</label>
-    <select class="form-control" @onchange="OnShowChanged">
-        <option disabled selected value="0">-- Vorstellung wählen --</option>
-        @foreach (var show in ActiveShows)
-        {
-            <option value="@show.ShowId">@($"{show.ProgramTitle} ({show.DateTime:g})")</option>
-        }
-    </select>
-</div>
-
-@if (AllTicketHolders == null)
-{
-    <p>Bitte eine Vorstellung wählen.</p>
-}
-else if (AllTicketHolders.Count == 0)
-{
-    <p>Keine Tickets für diese Vorstellung vorhanden.</p>
-}
-else
-{
-    <table class="table table-bordered table-striped">
-        <thead>
-            <tr>
-                <th>Reihe</th>
-                <th>Sitz</th>
-                <th>Name</th>
-                <th>Adresse</th>
-                <th>Ermäßigung</th>
-                <th>Ticketpreis</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var holder in AllTicketHolders.OrderBy(th => th.Tickets.First().Row).ThenBy(t => t.Tickets.First().SeatNumber))
+    <div class="form-group mb-3" style="max-width: 400px;">
+        <label>Vorstellung wählen</label>
+        <select class="form-control" @onchange="OnShowChanged">
+            <option disabled selected value="0">-- Vorstellung wählen --</option>
+            @foreach (var show in ActiveShows)
             {
-                var ticket = holder.Tickets.First(); // immer genau 1 Ticket pro Show
-                <tr>
-                    <td>@ticket.Row</td>
-                    <td>@ticket.SeatNumber</td>
-                    <td>@holder.TicketHolderName</td>
-                    <td>@holder.Address</td>
-                    <td>@ticket.Discount</td>
-                    <td>@ticket.Show.TicketPrice.ToString("0.00") €</td>
-                </tr>
+                <option value="@show.ShowId">@($"{show.ProgramTitle} ({show.DateStartTime:g})")</option>
             }
-        </tbody>
-    </table>
-}
+        </select>
+    </div>
+
+    @if (AllTicketHolders == null)
+    {
+        <p>Bitte eine Vorstellung wählen.</p>
+    }
+    else if (AllTicketHolders.Count == 0)
+    {
+        <p>Keine Tickets für diese Vorstellung vorhanden.</p>
+    }
+    else
+    {
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Reihe</th>
+                    <th>Sitz</th>
+                    <th>Name</th>
+                    <th>Adresse</th>
+                    <th>Ermäßigung</th>
+                    <th>Ticketpreis</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var holder in AllTicketHolders.OrderBy(th => th.Tickets.First().Row).ThenBy(t => t.Tickets.First().SeatNumber))
+                {
+                    var ticket = holder.Tickets.First(); // immer genau 1 Ticket pro Show
+                    <tr>
+                        <td>@ticket.Row</td>
+                        <td>@ticket.SeatNumber</td>
+                        <td>@holder.TicketHolderName</td>
+                        <td>@holder.Address</td>
+                        <td>@ticket.Discount</td>
+                        @if (ticket.Discount == Data.Enums.TicketDiscount.None)
+                        {
+                            <td>@ticket.Show.TicketPrice.ToString("0.00") €</td>
+                        }
+                        else
+                        {
+                            <td>@CalculateTicketPrice(ticket) €  (statt: @ticket.Show.TicketPrice.ToString("0.00") €)</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</ProtectedPage>
 
 @code {
     private List<ShowVM> ActiveShows = new List<ShowVM>();
@@ -65,8 +75,8 @@ else
     protected override async Task OnInitializedAsync()
     {
         ActiveShows = (await ShowService.GetAllShowsAsync())
-            .Where(s => s.IsActive)
-            .OrderBy(s => s.DateTime)
+            // .Where(s => s.IsActive)
+            .OrderBy(s => s.DateStartTime)
             .ToList();
     }
 
@@ -79,5 +89,19 @@ else
             AllTicketHolders = await TicketHolderService.GetForShowAsync(SelectedShowId);
             StateHasChanged();
         }
+    }
+
+    private decimal CalculateTicketPrice(Ticket t)
+    {
+        var price = t.Show.TicketPrice;
+        var finalPrice = t.Discount switch
+        {
+            TicketDiscount.Student => price * 0.5m,
+            TicketDiscount.Pupil => price * 0.5m,
+            TicketDiscount.Senior => price * 0.5m,
+            _ => price
+        };
+
+        return Math.Round(finalPrice, 2);
     }
 }
