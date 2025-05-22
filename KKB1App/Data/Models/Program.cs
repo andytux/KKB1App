@@ -32,5 +32,8 @@ namespace KKB1App.Data.Models
 
         [ForeignKey(nameof(ArtistId))]
         public Artist Artist { get; set; }
+
+        public ICollection<Show> Shows { get; set; } = new List<Show>();
+
     }
 }

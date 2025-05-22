@@ -1,0 +1,83 @@
+﻿@page "/ticketholders"
+@inject ShowService ShowService
+@inject TicketHolderService TicketHolderService
+
+@using KKB1App.Data.Models
+@using KKB1App.Data.ViewModels
+
+<h3>Ticketinhaber anzeigen</h3>
+
+<div class="form-group mb-3" style="max-width: 400px;">
+    <label>Vorstellung wählen</label>
+    <select class="form-control" @onchange="OnShowChanged">
+        <option disabled selected value="0">-- Vorstellung wählen --</option>
+        @foreach (var show in ActiveShows)
+        {
+            <option value="@show.ShowId">@($"{show.ProgramTitle} ({show.DateTime:g})")</option>
+        }
+    </select>
+</div>
+
+@if (AllTicketHolders == null)
+{
+    <p>Bitte eine Vorstellung wählen.</p>
+}
+else if (AllTicketHolders.Count == 0)
+{
+    <p>Keine Tickets für diese Vorstellung vorhanden.</p>
+}
+else
+{
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Reihe</th>
+                <th>Sitz</th>
+                <th>Name</th>
+                <th>Adresse</th>
+                <th>Ermäßigung</th>
+                <th>Ticketpreis</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var holder in AllTicketHolders.OrderBy(th => th.Tickets.First().Row).ThenBy(t => t.Tickets.First().SeatNumber))
+            {
+                var ticket = holder.Tickets.First(); // immer genau 1 Ticket pro Show
+                <tr>
+                    <td>@ticket.Row</td>
+                    <td>@ticket.SeatNumber</td>
+                    <td>@holder.TicketHolderName</td>
+                    <td>@holder.Address</td>
+                    <td>@ticket.Discount</td>
+                    <td>@ticket.Show.TicketPrice.ToString("0.00") €</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ShowVM> ActiveShows = new List<ShowVM>();
+    private List<TicketHolder> AllTicketHolders = new List<TicketHolder>();
+
+    private int SelectedShowId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ActiveShows = (await ShowService.GetAllShowsAsync())
+            .Where(s => s.IsActive)
+            .OrderBy(s => s.DateTime)
+            .ToList();
+    }
+
+    private async Task OnShowChanged(ChangeEventArgs e)
+    {
+        SelectedShowId = int.Parse(e.Value?.ToString() ?? "0");
+
+        if (SelectedShowId > 0)
+        {
+            AllTicketHolders = await TicketHolderService.GetForShowAsync(SelectedShowId);
+            StateHasChanged();
+        }
+    }
+}

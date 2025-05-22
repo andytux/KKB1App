@@ -12,9 +12,8 @@ namespace KKB1App.Services
         public async Task<List<TicketHolder>> GetForShowAsync(int showId)
         {
             return await dbContext.TicketHolders
-                .Where(h=> h.Tickets.Any(t=>
-                    t.ShowId == showId))
-                .Include(h=> h.Tickets)
+                .Where(h=> h.Tickets.Any(t=> t.ShowId == showId))
+                .Include(h=> h.Tickets).ThenInclude(t=>t.Show)
                 .ToListAsync();
         }
     }

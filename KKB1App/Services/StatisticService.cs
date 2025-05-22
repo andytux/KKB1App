@@ -17,14 +17,17 @@ namespace KKB1App.Services
 
         public async Task<List<ProgramStatisticsVM>> GetProgramStatisticsAsync()
         {
-            return await dbContext.Shows
+            var grouped = await dbContext.Shows
                 .Include(s => s.Program).ThenInclude(p => p.Artist)
                 .Include(s => s.Tickets)
+                .ToListAsync(); // 👉 Daten holen
+
+            return grouped
                 .GroupBy(s => new
                 {
                     ProgramId = s.ProgramId,
                     ProgramTitle = s.Program.Title,
-                    ArtistName = s.Program.Artist.ArtistName,
+                    ArtistName = s.Program.Artist.ArtistName
                 })
                 .Select(g => new ProgramStatisticsVM
                 {
@@ -32,25 +35,27 @@ namespace KKB1App.Services
                     ArtistName = g.Key.ArtistName,
                     TotalShows = g.Count(),
                     TotalTicketsSold = g.SelectMany(s => s.Tickets).Count(),
-                    TotalRevenue = g.SelectMany(s=>s.Tickets)
-                    .Sum(t => CalculateTicketPrice(t)),
+                    TotalRevenue = g.SelectMany(s => s.Tickets)
+                                    .Sum(t => CalculateTicketPrice(t)),
                     FirstShowDate = g.Min(s => s.DateTime),
                     LastShowDate = g.Max(s => s.DateTime),
                 })
                 .OrderByDescending(x => x.TotalTicketsSold)
-                .ToListAsync();
+                .ToList();
         }
 
         private decimal CalculateTicketPrice(Ticket t)
         {
             var price = t.Show.TicketPrice;
-            return t.Discount switch
+            var finalPrice = t.Discount switch
             {
                 TicketDiscount.Student => price * 0.5m,
                 TicketDiscount.Pupil => price * 0.5m,
                 TicketDiscount.Senior => price * 0.5m,
                 _ => price
             };
+
+            return Math.Round(finalPrice, 2);
         }
     }
 }

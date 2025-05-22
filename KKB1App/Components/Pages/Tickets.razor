@@ -125,7 +125,13 @@
 
             await LoadTakenSeats();
 
-            Ticket = new(); // Formular leeren
+            Ticket.Row = "";
+            Ticket.SeatNumber = 0;
+            Ticket.FullName = "";
+            Ticket.Address = "";
+            Ticket.Discount = TicketDiscount.None;
+
+            StateHasChanged();
         }
         else
         {

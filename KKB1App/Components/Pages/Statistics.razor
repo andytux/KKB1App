@@ -1,0 +1,54 @@
+﻿@page "/statistics"
+@inject StatisticService StatisticService
+
+@using KKB1App.Data.ViewModels
+
+<h3>Statistikübersicht</h3>
+
+@if (AllStatistics == null)
+{
+    <p>Lade Statistiken...</p>
+}
+else if (AllStatistics.Count == 0)
+{
+    <p>Keine Statistiken verfügbar.</p>
+}
+else
+{
+    <table class="table table-bordered table-striped">
+        <thead>
+            <tr>
+                <th>Programm</th>
+                <th>Künstler</th>
+                <th>Shows</th>
+                <th>Tickets verkauft</th>
+                <th>Gesamterlös</th>
+                <th>Erste Show</th>
+                <th>Letzte Show</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var s in AllStatistics)
+            {
+                <tr>
+                    <td>@s.ProgramTitle</td>
+                    <td>@s.ArtistName</td>
+                    <td>@s.TotalShows</td>
+                    <td>@s.TotalTicketsSold</td>
+                    <td>@s.TotalRevenue €</td>
+                    <td>@(s.FirstShowDate?.ToString("dd.MM.yyyy"))</td>
+                    <td>@(s.LastShowDate?.ToString("dd.MM.yyyy"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ProgramStatisticsVM> AllStatistics = new List<ProgramStatisticsVM>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        AllStatistics = await StatisticService.GetProgramStatisticsAsync();
+    }
+}
