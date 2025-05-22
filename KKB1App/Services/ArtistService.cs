@@ -13,6 +13,10 @@ namespace KKB1App.Services
             this.dbContext = dbContext;
         }
 
+        /// <summary>
+        /// Ruft alle Künstler aus der datenbank ab
+        /// </summary>
+        /// <returns>List<Artist></Artist></returns>
         public async Task<List<Artist>> GetAllArtistsAsync()
         {
             return await dbContext.Artists

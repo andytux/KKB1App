@@ -16,7 +16,11 @@ namespace KKB1App.Services
 
         public async Task<bool> AddShowAsync(Show show)
         {
-            bool dateTaken = await dbContext.Shows.AnyAsync(s=> s.DateTime == show.DateTime);
+            bool dateTaken = await dbContext.Shows
+                .AnyAsync(s =>
+                    s.DateStartTime < show.DateEndTime &&
+                    s.DateEndTime > show.DateStartTime
+                );
 
             if (!dateTaken)
             {
@@ -28,20 +32,59 @@ namespace KKB1App.Services
             return false;
         }
 
+        //public async Task<List<ShowVM>> GetAllShowsAsync()
+        //{
+        //    return await dbContext.Shows
+        //        .Include(s => s.Program)
+        //        .Select(s => new ShowVM
+        //        {
+        //            ShowId = s.ShowId,
+        //            ProgramId = s.ProgramId,
+        //            ProgramTitle = s.Program.Title,
+        //            DateStartTime = s.DateStartTime,
+        //            DateEndTime = s.DateEndTime,
+        //            TicketPrice = s.TicketPrice,
+        //            IsActive = s.IsActive
+        //        })
+        //        .ToListAsync();
+        //}
+
         public async Task<List<ShowVM>> GetAllShowsAsync()
         {
-            return await dbContext.Shows
+            var now = DateTime.Now;
+
+            var shows = await dbContext.Shows
                 .Include(s => s.Program)
-                .Select(s => new ShowVM
-                {
-                    ShowId = s.ShowId,
-                    ProgramId = s.ProgramId,
-                    ProgramTitle = s.Program.Title,
-                    DateTime = s.DateTime,
-                    TicketPrice = s.TicketPrice,
-                    IsActive = s.IsActive
-                })
                 .ToListAsync();
+
+            bool updated = false;
+
+            foreach (var show in shows)
+            {
+                //updated isactiv zu false, falls der die show schon in der vergangenheit liegt
+                if (show.DateEndTime < now && show.IsActive)
+                {
+                    show.IsActive = false;
+                    updated = true;
+                }
+            }
+
+            if (updated)
+            {
+                await dbContext.SaveChangesAsync();
+            }
+
+            return shows.Select(s => new ShowVM
+            {
+                ShowId = s.ShowId,
+                ProgramId = s.ProgramId,
+                ProgramTitle = s.Program.Title,
+                DateStartTime = s.DateStartTime,
+                DateEndTime = s.DateEndTime,
+                TicketPrice = s.TicketPrice,
+                IsActive = s.IsActive
+            }).ToList();
         }
+
     }
 }

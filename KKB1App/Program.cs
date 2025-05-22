@@ -52,8 +52,8 @@ app.MapGet("/statisticsapi/programs", async (AppDbContext db) =>
             ProgramTitle = p.Title,
             Artist = p.Artist.ArtistName,
             Shows = p.Shows
-                .OrderBy(s => s.DateTime)
-                .Select(s => new { s.DateTime, s.TicketPrice })
+                .OrderBy(s => s.DateStartTime)
+                .Select(s => new { s.DateStartTime, s.TicketPrice })
         })
         .ToListAsync();
 

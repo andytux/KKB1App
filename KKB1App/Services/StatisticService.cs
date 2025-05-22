@@ -37,8 +37,8 @@ namespace KKB1App.Services
                     TotalTicketsSold = g.SelectMany(s => s.Tickets).Count(),
                     TotalRevenue = g.SelectMany(s => s.Tickets)
                                     .Sum(t => CalculateTicketPrice(t)),
-                    FirstShowDate = g.Min(s => s.DateTime),
-                    LastShowDate = g.Max(s => s.DateTime),
+                    FirstShowDate = g.Min(s => s.DateStartTime),
+                    LastShowDate = g.Max(s => s.DateStartTime),
                 })
                 .OrderByDescending(x => x.TotalTicketsSold)
                 .ToList();
