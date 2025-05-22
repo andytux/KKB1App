@@ -1,0 +1,162 @@
+﻿@page "/tickets"
+@inject TicketService TicketService
+@inject ShowService ShowService
+
+@using KKB1App.Data.ViewModels
+@using static KKB1App.Data.Enums
+
+<h3>Ticketverkauf</h3>
+
+@if (!string.IsNullOrEmpty(Message))
+{
+    <p style="color:@(IsSuccess ? "green" : "red")">@Message</p>
+}
+
+<div style="max-width: 600px;">
+    <h4>Ticket buchen</h4>
+
+    <div class="form-group mb-2">
+        <label>Vorstellung</label>
+        <select class="form-control" @onchange="OnShowChanged">
+            <option disabled selected value="0">-- Vorstellung wählen --</option>
+            @foreach (var show in ActiveShows)
+            {
+                <option value="@show.ShowId">@($"{show.ProgramTitle} ({show.DateTime:g})")</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group mb-2">
+        <label>Reihe (A–K)</label>
+        <select class="form-control" @bind="Ticket.Row">
+            <option disabled selected value="">-- Reihe wählen --</option>
+            @foreach (var row in Rows)
+            {
+                <option value="@row">@row</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group mb-2">
+        <label>Sitznummer (1–25)</label>
+        <select class="form-control" @bind="Ticket.SeatNumber">
+            <option disabled selected value="">-- Sitz wählen --</option>
+            @foreach (var seat in SeatNumbers)
+            {
+                var seatKey = $"{Ticket.Row}-{seat}";
+                bool isTaken = TakenSeats.Contains(seatKey);
+
+                <option value="@seat" disabled="@isTaken">
+                    @(isTaken ? $"{seat} (belegt)" : seat.ToString())
+                </option>
+            }
+        </select>
+        
+    </div>
+
+    <div class="form-group mb-2">
+        <label>Ermäßigung</label>
+        <select class="form-control" @bind="Ticket.Discount">
+            @foreach (var discount in Enum.GetValues<TicketDiscount>())
+            {
+                <option value="@discount">@discount</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group mb-2">
+        <label>Vollständiger Name</label>
+        <input class="form-control" @bind="Ticket.FullName" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Anschrift</label>
+        <input class="form-control" @bind="Ticket.Address" />
+    </div>
+
+    <button class="btn btn-success" @onclick="BuyTicket">Ticket kaufen</button>
+</div>
+
+@code {
+    private TicketSaleVM Ticket = new();
+    private List<ShowVM> ActiveShows = new();
+
+    private string Message = string.Empty;
+    private bool IsSuccess = false;
+
+    private List<string> Rows = Enumerable.Range('A', 11).Select(i => ((char)i).ToString()).ToList(); // A–K
+    private List<int> SeatNumbers = Enumerable.Range(1, 25).ToList();
+
+    private HashSet<string> TakenSeats = new(); // z.B. "A-1", "B-3"
+
+    protected override async Task OnInitializedAsync()
+    {
+        ActiveShows = (await ShowService.GetAllShowsAsync())
+            .Where(s => s.IsActive)
+            .OrderBy(s => s.DateTime)
+            .ToList();
+
+                Ticket = new TicketSaleVM();
+
+    }
+
+    private async Task BuyTicket()
+    {
+        if (string.IsNullOrWhiteSpace(Ticket.Row) || Ticket.SeatNumber < 1 || Ticket.SeatNumber > 25)
+        {
+            Message = "Ungültiger Sitzplatz.";
+            IsSuccess = false;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Ticket.FullName) || string.IsNullOrWhiteSpace(Ticket.Address))
+        {
+            Message = "Name und Adresse sind Pflicht.";
+            IsSuccess = false;
+            return;
+        }
+
+        var success = await TicketService.SellTicketAsync(Ticket);
+
+        if (success)
+        {
+            Message = "Ticket erfolgreich verkauft.";
+            IsSuccess = true;
+
+            await LoadTakenSeats();
+
+            Ticket = new(); // Formular leeren
+        }
+        else
+        {
+            Message = $"""Fehler: Sitzplatz "{Ticket.SeatNumber}" in Reihe: "{Ticket.Row}",  ist bereits vergeben!""";
+            IsSuccess = false;
+        }
+    }
+
+    private async Task OnShowChanged(ChangeEventArgs e)
+    {
+        Ticket.ShowId = int.Parse(e.Value?.ToString() ?? "0");
+        Ticket.Row = "";
+        Ticket.SeatNumber = 0;
+
+        await LoadTakenSeats();
+        StateHasChanged();
+    }
+
+
+    private async Task LoadTakenSeats()
+    {
+        TakenSeats.Clear();
+
+        if (Ticket.ShowId > 0)
+        {
+            var taken = await TicketService.GetTakenSeatsAsync(Ticket.ShowId);
+            foreach (var (row, seat) in taken)
+            {
+                TakenSeats.Add($"{row}-{seat}");
+            }
+        }
+    }
+
+}

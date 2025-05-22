@@ -46,5 +46,14 @@ namespace KKB1App.Services
 
             return true;
         }
+
+        public async Task<List<(string Row, int Seat)>> GetTakenSeatsAsync(int showId)
+        {
+            return await dbContext.Tickets
+                .Where(t => t.ShowId == showId)
+                .Select(t => new ValueTuple<string, int>(t.Row, t.SeatNumber))
+                .ToListAsync();
+        }
+
     }
 }
