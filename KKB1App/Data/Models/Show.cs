@@ -10,7 +10,9 @@ namespace KKB1App.Data.Models
         public int ShowId { get; set; }
 
         [Required]
-        public DateTime DateTime { get; set; }
+        public DateTime DateStartTime { get; set; }
+        [Required]
+        public DateTime DateEndTime { get; set; }
 
         [Required]
         public int ProgramId { get; set; }

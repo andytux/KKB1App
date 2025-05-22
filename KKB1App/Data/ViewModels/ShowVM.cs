@@ -5,7 +5,8 @@
         public int ShowId { get; set; }
 
         public int ProgramId { get; set; }
-        public DateTime DateTime { get; set; }
+        public DateTime DateStartTime { get; set; }
+        public DateTime DateEndTime { get; set; }
 
         public decimal TicketPrice { get; set; }
 

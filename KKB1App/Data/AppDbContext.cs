@@ -25,7 +25,7 @@ namespace KKB1App.Data
                 .IsUnique();
 
             modelBuilder.Entity<Show>()
-                .HasIndex(s => s.DateTime)
+                .HasIndex(s => s.DateStartTime)
                 .IsUnique();
         }
     }
