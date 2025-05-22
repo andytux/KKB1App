@@ -1,0 +1,90 @@
+﻿@page "/login"
+@page "/login/{UserName}/{Message}"
+
+@inject UserService UserService
+@inject AuthService AuthService
+@inject AuthStateService AuthStateService
+@inject NavigationManager NavManager
+
+@using KKB1App.Data.ViewModels
+
+
+<h3>Login</h3>
+<div style="max-width: 450px">
+
+    <InfoMessage Message="@Message"></InfoMessage>
+
+
+    <InputField Label="Username"
+                PlaceHolder="Enter Username here..."
+                @bind-Value="User.UserName">
+
+    </InputField>
+    <InputField Label="Password"
+                PlaceHolder="Enter Password here..."
+                @bind-Value="User.Password"
+                IsPassword="true"
+                ShowPassword="@ShowPassword">
+
+    </InputField>
+    <div>
+        <InputCheckbox @bind-Value="ShowPassword"></InputCheckbox>
+        <label>show Password?</label>
+    </div>
+    <div>
+        <button @onclick="LoginUser">Login</button>
+    </div>
+</div>
+
+
+@code {
+    [Parameter]
+    public string Message { get; set; } = string.Empty;
+    [Parameter]
+    public string UserName { get; set; } = string.Empty;
+
+    private bool ShowPassword = false;
+
+
+    private UserVM User = new UserVM();
+
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrEmpty(UserName))
+        {
+            User.UserName = UserName;
+        }
+    }
+
+    private async Task LoginUser()
+    {
+        //Checkt ob felder ausgefüllt sind
+        if (string.IsNullOrEmpty(User.UserName) || string.IsNullOrEmpty(User.Password))
+        {
+            Message = "Can't login, fill fields Username and Password.";
+            return;
+        }
+        var user = await UserService.GetUserByNameAsync(User.UserName);
+
+        if (user == null)
+        {
+            Message = "Can't login, Username or Password wrong.";
+            return;
+        }
+
+        var valid = AuthService.VerifyPassword(User.Password, user);
+
+        if (valid)
+        {
+            await AuthStateService.Login(user.UserName, user.UserId);
+            NavManager.NavigateTo("/");
+        }
+        else
+        {
+            Message = "Can't login, Username or Password wrong.";
+            return;
+        }
+
+    }
+
+}

@@ -1,0 +1,88 @@
+﻿@page "/register"
+
+@inject UserService UserService
+@inject AuthService AuthService
+@inject NavigationManager NavManager
+
+@using KKB1App.Data.Models
+@using KKB1App.Data.ViewModels
+<h3>Register</h3>
+<InfoMessage Message="@Message"></InfoMessage>
+
+<div style="max-width: 450px">
+
+    <InputField Label="Username"
+                PlaceHolder="Enter Username here..."
+                @bind-Value="User.UserName">
+
+    </InputField>
+    <InputField Label="Password"
+                PlaceHolder="Enter Password here..."
+                @bind-Value="User.Password"
+                IsPassword="true"
+                ShowPassword="@ShowPassword">
+
+    </InputField>
+    <InputField Label="Confirm Password"
+                PlaceHolder="Confirm Password here..."
+                @bind-Value="User.ConfirmPassword"
+                IsPassword="true"
+                ShowPassword="@ShowPassword">
+
+    </InputField>
+    <div>
+        <InputCheckbox @bind-Value="ShowPassword"></InputCheckbox>
+        <label>show Password?</label>
+    </div>
+    <div>
+        <button @onclick="RegisterUser">Register</button>
+    </div>
+</div>
+
+@code {
+
+    private string Message = string.Empty;
+    private bool ShowPassword = false;
+    private UserVM User = new UserVM();
+
+
+    private async Task RegisterUser()
+    {
+        //Feld überprüfung
+        if (string.IsNullOrEmpty(User.UserName) || string.IsNullOrEmpty(User.Password) || string.IsNullOrEmpty(User.ConfirmPassword))
+        {
+            Message = "Can't register, fill fields Username, Password or Confirm Password is missing.";
+            return;
+        }
+
+        //Passwortübereinstimmung
+        if (User.Password != User.ConfirmPassword)
+        {
+            Message = "Can't register, Password and Confirm Password doesn't match.";
+            return;
+        }
+
+        var user = await UserService.GetUserByNameAsync(User.UserName);
+
+        if (user != null)
+        {
+            Message = "Can't login, Username or Password wrong.";
+            return;
+        }
+
+        user = new User
+            {
+                UserName = User.UserName,
+            };
+
+        user.PasswordHash = AuthService.GetPasswordHash(User.Password, user);
+
+        await UserService.AddUserAsync(user);
+
+        Message = "Registration successful, please login.";
+
+        NavManager.NavigateTo($"/login/{user.UserName}/{Message}");
+
+    }
+
+}
