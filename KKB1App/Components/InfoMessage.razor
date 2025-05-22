@@ -1,0 +1,25 @@
+﻿@if (!string.IsNullOrEmpty(Message))
+{
+    <p style="color: @HandleMessageColor()">@Message</p>
+}
+@code {
+    [Parameter]
+    public string Message { get; set; } = string.Empty;
+
+    private string HandleMessageColor()
+    {
+        if (Message.ToLower().Contains("nicht"))
+        {
+            return "red";
+        }
+        else if (Message.ToLower().Contains("erfolgreich"))
+        {
+            return "green";
+        }
+        else
+        {
+            return "black";
+        }
+    }
+
+}

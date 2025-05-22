@@ -52,12 +52,13 @@
     <div class="form-group mb-3">
         <label>Künstler</label>
         <select class="form-control" @bind="NewProgram.ArtistId">
-            <option disabled selected value="">-- Bitte wählen --</option>
+            <option disabled selected value="0">-- Bitte wählen --</option>
             @foreach (var artist in AllArtists)
             {
                 <option value="@artist.ArtistId">@artist.ArtistName</option>
             }
         </select>
+
     </div>
 
     <button class="btn btn-success" @onclick="AddProgram">Programm hinzufügen</button>
@@ -104,9 +105,9 @@ else
 
 @code {
     private List<Artist> AllArtists = new();
-    private List<Data.Models.Program> AllPrograms = new();
+    private List<Program> AllPrograms = new();
 
-    private Data.Models.Program NewProgram = new()
+    private Program NewProgram = new()
         {
             StartDate = DateTime.Today,
             EndDate = DateTime.Today.AddDays(1),

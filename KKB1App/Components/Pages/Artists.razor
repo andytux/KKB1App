@@ -1,0 +1,90 @@
+﻿@page "/artists"
+@using KKB1App.Data.Models
+@inject ArtistService ArtistService
+
+<h3>Künstlerverwaltung</h3>
+
+<InfoMessage Message="@Message"></InfoMessage>
+
+<div style="max-width: 500px; margin-bottom: 2rem;">
+    <h4>Neuen Künstler anlegen</h4>
+    <div class="form-group mb-2">
+        <label for="artistName">Name des Künstlers</label>
+        <input class="form-control" id="artistName" @bind="NewArtistName" placeholder="z.B. Josef Hader" />
+    </div>
+    <button class="btn btn-primary" @onclick="AddArtist">Künstler hinzufügen</button>
+</div>
+
+<hr />
+
+<h4>Alle Künstler</h4>
+
+@if (AllArtists == null)
+{
+    <p>Lade Daten...</p>
+}
+else if (AllArtists.Count == 0)
+{
+    <p>Keine Künstler vorhanden.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Anzahl Programme</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var artist in AllArtists)
+                {
+                    <tr>
+                        <td>@artist.ArtistName</td>
+                        <td>@artist.Programs?.Count ?? 0</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private string NewArtistName = string.Empty;
+    private List<Artist> AllArtists = new();
+    private string Message = string.Empty;
+    private bool IsSuccess = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadArtists();
+    }
+
+    private async Task AddArtist()
+    {
+        if (string.IsNullOrWhiteSpace(NewArtistName))
+        {
+            Message = "Name darf nicht leer sein.";
+            IsSuccess = false;
+            return;
+        }
+
+        var artist = new Artist
+            {
+                ArtistName = NewArtistName.Trim()
+            };
+
+        await ArtistService.AddArtistAsync(artist);
+        Message = "Künstler erfolgreich hinzugefügt.";
+        IsSuccess = true;
+        NewArtistName = string.Empty;
+
+        await LoadArtists();
+    }
+
+    private async Task LoadArtists()
+    {
+        AllArtists = await ArtistService.GetAllArtistsAsync();
+    }
+}
