@@ -1,8 +1,12 @@
 ﻿@page "/shows"
+@page "/shows/{ShowId:int}"
+
 @using KKB1App.Data.Models
 @using KKB1App.Data.ViewModels
+
 @inject ShowService ShowService
 @inject ProgramService ProgramService
+@inject NavigationManager NavManager
 
 <h3>Vorstellungen verwalten</h3>
 <ProtectedPage>
@@ -68,6 +72,7 @@
                     <th>Datum</th>
                     <th>Preis</th>
                     <th>Status</th>
+                    <th>Aktionen</th>
                 </tr>
             </thead>
             <tbody>
@@ -82,6 +87,10 @@
                         </td>
                         <td>@show.TicketPrice €</td>
                         <td>@(show.IsActive ? "Aktiv" : "Inaktiv")</td>
+                        <td>
+                            <button @onclick="()=> EditShow(show.ShowId)">Bearbeiten</button>
+                            <button @onclick="()=> RemoveShow(show.ShowId)">Löschen</button>
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -90,6 +99,9 @@
 </ProtectedPage>
 
 @code {
+    [Parameter]
+    public int ShowId { get; set; } = 0;
+
     private List<ShowVM> AllShows = new();
     private List<Data.Models.Program> Programs = new();
 
@@ -100,8 +112,29 @@
     private string Message = string.Empty;
     private bool IsSuccess = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
+        if (ShowId != 0)
+        {
+            var show = await ShowService.GetShowByIdAsync(ShowId);
+
+            if (show != null)
+            {
+
+                NewShow.ShowId = ShowId;
+                NewShow.ProgramId = show.ProgramId;
+                NewShow.TicketPrice = show.TicketPrice;
+                ShowStartDateTime = show.DateStartTime;
+                ShowEndDateTime = show.DateEndTime;
+                // NewShow.DateStartTime = show.DateStartTime;
+                // NewShow.DateEndTime = show.DateEndTime;
+                NewShow.ProgramTitle = show.Program.Title;
+                NewShow.IsActive = show.IsActive;
+
+                StateHasChanged();
+            }
+
+        }
         Programs = await ProgramService.GetAllProgramsAsync();
         try
         {
@@ -131,10 +164,11 @@
             IsSuccess = false;
             return;
         }
+        var show = new Show();
 
-
-        var show = new Show
+        show = new Show
             {
+                ShowId = NewShow.ShowId,
                 ProgramId = NewShow.ProgramId,
                 DateStartTime = NewShow.DateStartTime,
                 DateEndTime = NewShow.DateEndTime,
@@ -142,14 +176,13 @@
                 IsActive = NewShow.IsActive
             };
 
-
-
         var success = await ShowService.AddShowAsync(show);
 
         if (success)
         {
             Message = "Vorstellung gespeichert.";
             IsSuccess = true;
+            NewShow.ShowId = 0;
             NewShow.ProgramId = 0;
             NewShow.DateStartTime = ShowStartDateTime;
             NewShow.DateEndTime = ShowEndDateTime;
@@ -163,5 +196,26 @@
             Message = "Fehler: Es existiert bereits eine Vorstellung zu diesem Zeitpunkt!";
             IsSuccess = false;
         }
+    }
+
+    private void EditShow(int showId)
+    {
+        NavManager.NavigateTo($"/shows/{showId}");
+    }
+
+    private async Task RemoveShow(int showId)
+    {
+        var removed = await ShowService.RemoveShowAsync(showId);
+
+        if (removed)
+        {
+            Message = "Show wurde erfolgreich aus der Datenbank entfernt.";
+        }
+        else
+        {
+            Message = "Show konnte nicht aus der Datenbank entfernt werden. Probieren sie es nocheinmal.";
+        }
+
+        await LoadShows();
     }
 }

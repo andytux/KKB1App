@@ -1,8 +1,12 @@
 ﻿@page "/programs"
+@page "/programs/{ProgramId:int}"
+
 @using KKB1App.Data
 @using KKB1App.Data.Models
+
 @inject ProgramService ProgramService
 @inject ArtistService ArtistService
+@inject NavigationManager NavManager
 
 <h3>Programme verwalten</h3>
 <ProtectedPage>
@@ -13,7 +17,7 @@
     }
 
     <div style="max-width: 600px; margin-bottom: 2rem;">
-        <h4>Neues Programm erfassen</h4>
+        <h4>@((NewProgram.ProgramId == 0) ? "Neues Programm erstellen" : "Programm bearbeiten")</h4>
 
         <div class="form-group mb-2">
             <label>Titel</label>
@@ -62,7 +66,7 @@
 
         </div>
 
-        <button class="btn btn-success" @onclick="AddProgram">Programm hinzufügen</button>
+        <button class="btn btn-success" @onclick="AddProgram">@((NewProgram.ProgramId == 0) ? "Programm hinzufügen" : "Programm bearbeiten")</button>
     </div>
 
     <hr />
@@ -87,6 +91,7 @@
                     <th>Laufzeit</th>
                     <th>Zahlung</th>
                     <th>Honorar</th>
+                    <th>Aktionen</th>
                 </tr>
             </thead>
             <tbody>
@@ -98,6 +103,10 @@
                         <td>@p.StartDate.ToShortDateString() – @p.EndDate.ToShortDateString()</td>
                         <td>@p.PaymentMode</td>
                         <td>@p.Fee €</td>
+                        <td>
+                            <button @onclick="()=> EditProgram(p.ProgramId)">Bearbeiten</button>
+                            <button @onclick="()=> RemoveProgram(p.ProgramId)">Löschen</button>
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -109,6 +118,9 @@
     private List<Artist> AllArtists = new();
     private List<Program> AllPrograms = new();
 
+    [Parameter]
+    public int ProgramId { get; set; } = 0;
+
     private Program NewProgram = new()
         {
             StartDate = DateTime.Today,
@@ -119,8 +131,28 @@
     private string Message = string.Empty;
     private bool IsSuccess = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
+        if(ProgramId != 0)
+        {
+            var program = await ProgramService.GetProgramByIdAsync(ProgramId);
+            if(program != null)
+            {
+                NewProgram.ProgramId = ProgramId;
+                NewProgram.StartDate = program.StartDate;
+                NewProgram.EndDate = program.EndDate;
+                NewProgram.Fee = program.Fee;
+                NewProgram.Description = program.Description;
+                NewProgram.ArtistId = program.ArtistId;
+                NewProgram.PaymentMode = program.PaymentMode;
+                NewProgram.Title = program.Title;
+
+                StateHasChanged();
+
+            }
+
+        }
+
         AllArtists = await ArtistService.GetAllArtistsAsync();
         AllPrograms = await ProgramService.GetAllProgramsAsync();
     }
@@ -141,11 +173,36 @@
 
         NewProgram = new()
             {
+                ProgramId = 0,
                 StartDate = DateTime.Today,
                 EndDate = DateTime.Today.AddDays(1),
                 PaymentMode = Enums.PaymentMode.Prepaid
             };
 
         AllPrograms = await ProgramService.GetAllProgramsAsync();
+    }
+
+    private void EditProgram(int programId)
+    {
+        NavManager.NavigateTo($"/programs/{programId}");
+    }
+
+    private async Task RemoveProgram (int programId)
+    {
+        var removed = await ProgramService.RemoveProgramByIdAsync(programId);
+
+        if (removed)
+        {
+            Message = "Programm wurde erfolgreich entfernt.";
+        }
+        else
+        {
+            Message = "Programm konnte nicht entfernt werden, bitte versuchen sie es erneut.";
+        }
+
+        AllPrograms = await ProgramService.GetAllProgramsAsync();
+
+        StateHasChanged();
+
     }
 }
