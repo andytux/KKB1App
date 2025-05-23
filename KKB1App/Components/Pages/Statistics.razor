@@ -36,7 +36,7 @@
                         <td>@s.ArtistName</td>
                         <td>@s.TotalShows</td>
                         <td>@s.TotalTicketsSold</td>
-                        <td>@s.TotalRevenue €</td>
+                        <td>@s.TotalRevenue.ToString("0.00") €</td>
                         <td>@(s.FirstShowDate?.ToString("dd.MM.yyyy"))</td>
                         <td>@(s.LastShowDate?.ToString("dd.MM.yyyy"))</td>
                     </tr>

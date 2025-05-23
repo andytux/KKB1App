@@ -20,7 +20,7 @@ namespace KKB1App.Services
             var grouped = await dbContext.Shows
                 .Include(s => s.Program).ThenInclude(p => p.Artist)
                 .Include(s => s.Tickets)
-                .ToListAsync(); // 👉 Daten holen
+                .ToListAsync();
 
             return grouped
                 .GroupBy(s => new
