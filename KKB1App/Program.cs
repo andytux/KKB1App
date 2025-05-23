@@ -1,5 +1,6 @@
 using KKB1App.Components;
 using KKB1App.Data;
+using KKB1App.Data.ViewModels;
 using KKB1App.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -47,13 +48,16 @@ app.MapGet("/statisticsapi/programs", async (AppDbContext db) =>
     var data = await db.Programs
         .Include(p => p.Artist)
         .Include(p => p.Shows)
-        .Select(p => new
+        .Select(p => new StatisticVM
         {
             ProgramTitle = p.Title,
-            Artist = p.Artist.ArtistName,
-            Shows = p.Shows
-                .OrderBy(s => s.DateStartTime)
-                .Select(s => new { s.DateStartTime, s.TicketPrice })
+            ArtistName = p.Artist.ArtistName,
+            Shows = p.Shows.OrderBy(s => s.DateStartTime)
+                           .Select(s => new ShowInfoVM
+                           {
+                               DateTime = s.DateStartTime,
+                               TicketPrice = s.TicketPrice
+                           }).ToList()
         })
         .ToListAsync();
 
