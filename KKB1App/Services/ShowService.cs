@@ -1,6 +1,7 @@
 ﻿using KKB1App.Data;
 using KKB1App.Data.Models;
 using KKB1App.Data.ViewModels;
+using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 
 namespace KKB1App.Services
@@ -16,20 +17,44 @@ namespace KKB1App.Services
 
         public async Task<bool> AddShowAsync(Show show)
         {
-            bool dateTaken = await dbContext.Shows
-                .AnyAsync(s =>
-                    s.DateStartTime < show.DateEndTime &&
-                    s.DateEndTime > show.DateStartTime
-                );
-
-            if (!dateTaken)
+            if (show.ShowId == 0)
             {
-                dbContext.Shows.Add(show);
-                await dbContext.SaveChangesAsync();
-                return true;
+                bool dateTaken = await dbContext.Shows
+                    .AnyAsync(s =>
+                        s.DateStartTime < show.DateEndTime &&
+                        s.DateEndTime > show.DateStartTime
+                    );
+
+                if (!dateTaken)
+                {
+                    dbContext.Shows.Add(show);
+                    await dbContext.SaveChangesAsync();
+                    return true;
+                }
+            }
+            else
+            {
+                var showToUpdate = await GetShowByIdAsync(show.ShowId);
+
+                if(showToUpdate != null)
+                {
+                    showToUpdate.ProgramId = show.ProgramId;
+                    showToUpdate.TicketPrice = show.TicketPrice;
+                    showToUpdate.DateStartTime = show.DateStartTime;
+                    showToUpdate.DateEndTime = show.DateEndTime;
+                    showToUpdate.IsActive = show.IsActive;
+
+                    dbContext.Shows.Update(showToUpdate);
+                    await dbContext.SaveChangesAsync();
+
+                    return true;
+                    
+                }
+
+                return false;
             }
 
-            return false;
+                return false;
         }
 
         //public async Task<List<ShowVM>> GetAllShowsAsync()
@@ -84,6 +109,28 @@ namespace KKB1App.Services
                 TicketPrice = s.TicketPrice,
                 IsActive = s.IsActive
             }).ToList();
+        }
+
+        public async Task<bool> RemoveShowAsync(int showId)
+        {
+            var showToRemove = await GetShowByIdAsync(showId);
+
+            if (showToRemove != null)
+            {
+                dbContext.Shows.Remove(showToRemove);
+                await dbContext.SaveChangesAsync();
+                return true;
+            }
+
+            return false;
+
+        }
+
+        public async Task<Show?> GetShowByIdAsync(int showId)
+        {
+            return await dbContext.Shows
+                .Include(s => s.Program).ThenInclude(p => p.Artist)
+                .FirstOrDefaultAsync(s => s.ShowId == showId);
         }
 
     }
