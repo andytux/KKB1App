@@ -63,6 +63,10 @@
         await LoadArtists();
     }
 
+    /// <summary>
+    /// speichert einen neuen künstler 
+    /// </summary>
+    /// <returns></returns>
     private async Task AddArtist()
     {
         if (string.IsNullOrWhiteSpace(NewArtistName))
@@ -86,6 +90,10 @@
         await LoadArtists();
     }
 
+    /// <summary>
+    /// ladet alle künstler einer datenbank in ein liste
+    /// </summary>
+    /// <returns></returns>
     private async Task LoadArtists()
     {
         AllArtists = await ArtistService.GetAllArtistsAsync();

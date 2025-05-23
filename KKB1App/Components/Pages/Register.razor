@@ -48,14 +48,14 @@
 
     private async Task RegisterUser()
     {
-        //Feld überprüfung
+        //Feld überprüfung ob leer
         if (string.IsNullOrEmpty(User.UserName) || string.IsNullOrEmpty(User.Password) || string.IsNullOrEmpty(User.ConfirmPassword))
         {
             Message = "Nicht alle Felder sind befüllt.";
             return;
         }
 
-        //Passwortübereinstimmung
+        //Passwortübereinstimmung passwort und confirm passwort
         if (User.Password != User.ConfirmPassword)
         {
             Message = "Registration nicht erfolgreich, Passwörter stimmen nicht überein.";

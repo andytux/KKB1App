@@ -14,18 +14,25 @@ namespace KKB1App.Services
             this.dbContext = dbContext;
         }
 
+        /// <summary>
+        /// speichert ein ticket inklusive besitzer in der datenbank
+        /// </summary>
+        /// <param name="ticketSaleVM">viewmodel</param>
+        /// <returns>bool</returns>
         public async Task<bool> SellTicketAsync(TicketSaleVM ticketSaleVM)
         {
+            // überprüft ob der ausgewählte sessel schon besetzt ist
             bool seatTaken = await dbContext.Tickets.AnyAsync(t =>
-            t.ShowId == ticketSaleVM.ShowId &&
-            t.Row == ticketSaleVM.Row &&
-            t.SeatNumber == ticketSaleVM.SeatNumber);
+                                t.ShowId == ticketSaleVM.ShowId &&
+                                t.Row == ticketSaleVM.Row &&
+                                t.SeatNumber == ticketSaleVM.SeatNumber);
 
             if (seatTaken)
             {
                 return false;
             }
 
+            // erstellt einen neuen besitzer
             var holder = new TicketHolder
             {
                 TicketHolderName = ticketSaleVM.FullName,
@@ -47,6 +54,11 @@ namespace KKB1App.Services
             return true;
         }
 
+        /// <summary>
+        /// Erstellt eine liste der besetzten sitze pro reihe 
+        /// </summary>
+        /// <param name="showId"></param>
+        /// <returns>List<Reihe, Sitznummer></returns>
         public async Task<List<(string Row, int Seat)>> GetTakenSeatsAsync(int showId)
         {
             return await dbContext.Tickets

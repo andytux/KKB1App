@@ -87,7 +87,7 @@
     private List<string> Rows = Enumerable.Range('A', 11).Select(i => ((char)i).ToString()).ToList(); // A–K
     private List<int> SeatNumbers = Enumerable.Range(1, 25).ToList();
 
-    private HashSet<string> TakenSeats = new(); // z.B. "A-1", "B-3"
+    private HashSet<string> TakenSeats = new(); // z.B. "A-1", "B-3" für die schon besetzten sitze in einer reihe
 
     protected override async Task OnInitializedAsync()
     {
@@ -100,13 +100,20 @@
 
     }
 
+    /// <summary>
+    /// speichert ein ticket in der datenbank
+    /// </summary>
+    /// <returns></returns>
     private async Task BuyTicket()
     {
+        //wurde die show ausgewählt
         if (Ticket.ShowId == 0)
         {
             Message = "Bitte wählen sie eine Vorstellung aus.";
             return;
         }
+
+        //wurde in einer reihe ein sitzpaltz ausgewählt
         if (string.IsNullOrWhiteSpace(Ticket.Row) || Ticket.SeatNumber < 1 || Ticket.SeatNumber > 25)
         {
             Message = "Nicht gültiger Sitzplatz.";
@@ -114,6 +121,7 @@
             return;
         }
 
+        //Wurde name und adresse angegeben
         if (string.IsNullOrWhiteSpace(Ticket.FullName) || string.IsNullOrWhiteSpace(Ticket.Address))
         {
             Message = "Nicht befüllte Felder. Name und Adresse sind Pflicht.";
@@ -121,6 +129,7 @@
             return;
         }
 
+        // konnte gespeichert werden
         var success = await TicketService.SellTicketAsync(Ticket);
 
         if (success)
@@ -130,6 +139,7 @@
 
             await LoadTakenSeats();
 
+            //sezte das ticket wieder zurück
             Ticket.Row = "";
             Ticket.SeatNumber = 0;
             Ticket.FullName = "";
@@ -145,6 +155,11 @@
         }
     }
 
+    /// <summary>
+    /// Setzt die showid fals im select eine show ausgewählt wurde
+    /// </summary>
+    /// <param name="e"></param>
+    /// <returns></returns>
     private async Task OnShowChanged(ChangeEventArgs e)
     {
         Ticket.ShowId = int.Parse(e.Value?.ToString() ?? "0");
@@ -155,13 +170,17 @@
         StateHasChanged();
     }
 
-
+    /// <summary>
+    /// Holt sich eine liste mit den bereits besetzen sitzen
+    /// </summary>
+    /// <returns></returns>
     private async Task LoadTakenSeats()
     {
         TakenSeats.Clear();
 
         if (Ticket.ShowId > 0)
         {
+            //sitz schon verwendet
             var taken = await TicketService.GetTakenSeatsAsync(Ticket.ShowId);
             foreach (var (row, seat) in taken)
             {

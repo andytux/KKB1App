@@ -15,7 +15,12 @@ namespace KKB1App.Services
             this.dbContext = dbContext;
         }
 
-        public async Task<bool> AddShowAsync(Show show)
+        /// <summary>
+        /// Fügt ein programm in der datenbank hinzu oder editiert ein vorhandenes
+        /// </summary>
+        /// <param name="show"></param>
+        /// <returns>bool</returns>
+        public async Task<bool> AddOrEditShowAsync(Show show)
         {
             if (show.ShowId == 0)
             {
@@ -57,6 +62,10 @@ namespace KKB1App.Services
                 return false;
         }
 
+        /// <summary>
+        /// Ruft alle shows aus der datenbank ab
+        /// </summary>
+        /// <returns>List<ShowVM></returns>
         //public async Task<List<ShowVM>> GetAllShowsAsync()
         //{
         //    return await dbContext.Shows
@@ -74,6 +83,10 @@ namespace KKB1App.Services
         //        .ToListAsync();
         //}
 
+        /// <summary>
+        /// Ruft alle shows aus der datenbank ab und setzt in vergangene shows auf inaktiv
+        /// </summary>
+        /// <returns>List<ShowVM></returns>
         public async Task<List<ShowVM>> GetAllShowsAsync()
         {
             var now = DateTime.Now;
@@ -86,14 +99,15 @@ namespace KKB1App.Services
 
             foreach (var show in shows)
             {
-                //updated isactiv zu false, falls der die show schon in der vergangenheit liegt
+                //setzt isactiv zu false, falls der die show schon in der vergangenheit liegt
                 if (show.DateEndTime < now && show.IsActive)
                 {
                     show.IsActive = false;
                     updated = true;
                 }
             }
-
+            
+            //speichert die änderungen in der db
             if (updated)
             {
                 await dbContext.SaveChangesAsync();
@@ -111,6 +125,11 @@ namespace KKB1App.Services
             }).ToList();
         }
 
+        /// <summary>
+        /// Löscht eine show per id aus der datenbank
+        /// </summary>
+        /// <param name="showId"></param>
+        /// <returns>bool</returns>
         public async Task<bool> RemoveShowAsync(int showId)
         {
             var showToRemove = await GetShowByIdAsync(showId);
@@ -126,6 +145,11 @@ namespace KKB1App.Services
 
         }
 
+        /// <summary>
+        /// Ruft eine show per id aus der datenbank ab (includiert auch Program und Artist)
+        /// </summary>
+        /// <param name="showId"></param>
+        /// <returns>Show oder null</returns>
         public async Task<Show?> GetShowByIdAsync(int showId)
         {
             return await dbContext.Shows

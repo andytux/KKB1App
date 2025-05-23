@@ -24,6 +24,11 @@ namespace KKB1App.Services
                 .ToListAsync();
         }
 
+        /// <summary>
+        /// Speicher einen Künstler in der datenbank ab
+        /// </summary>
+        /// <param name="artist"></param>
+        /// <returns></returns>
         public async Task AddArtistAsync(Artist artist)
         {
             if(artist != null)

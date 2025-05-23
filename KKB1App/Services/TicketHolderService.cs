@@ -8,7 +8,11 @@ namespace KKB1App.Services
     {
         private readonly AppDbContext dbContext = dbContext;
 
-
+        /// <summary>
+        /// Ruft alle Ticketbesitzer für eine bestimmte show (per id) ab
+        /// </summary>
+        /// <param name="showId">id der show</param>
+        /// <returns>List<TicketHolder></returns>
         public async Task<List<TicketHolder>> GetForShowAsync(int showId)
         {
             return await dbContext.TicketHolders

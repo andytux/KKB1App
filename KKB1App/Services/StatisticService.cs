@@ -15,6 +15,10 @@ namespace KKB1App.Services
             this.dbContext = dbContext;
         }
 
+        /// <summary>
+        /// Ruft alle programstatistics aus der datenbank
+        /// </summary>
+        /// <returns></returns>
         public async Task<List<ProgramStatisticsVM>> GetProgramStatisticsAsync()
         {
             var grouped = await dbContext.Shows
@@ -44,6 +48,11 @@ namespace KKB1App.Services
                 .ToList();
         }
 
+        /// <summary>
+        /// Rechnet den Rabatt des preises falls ein discount ausgewählt wurde
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
         private decimal CalculateTicketPrice(Ticket t)
         {
             var price = t.Show.TicketPrice;

@@ -48,7 +48,7 @@
             <input type="checkbox" @bind="NewShow.IsActive" /> Aktiv
         </div>
 
-        <button class="btn btn-success" @onclick="AddShow">Vorstellung speichern</button>
+        <button class="btn btn-success" @onclick="AddOrEditShow">Vorstellung speichern</button>
     </div>
 
     <hr />
@@ -116,6 +116,7 @@
     {
         if (ShowId != 0)
         {
+            //ruft die vorhandene show ab
             var show = await ShowService.GetShowByIdAsync(ShowId);
 
             if (show != null)
@@ -126,8 +127,6 @@
                 NewShow.TicketPrice = show.TicketPrice;
                 ShowStartDateTime = show.DateStartTime;
                 ShowEndDateTime = show.DateEndTime;
-                // NewShow.DateStartTime = show.DateStartTime;
-                // NewShow.DateEndTime = show.DateEndTime;
                 NewShow.ProgramTitle = show.Program.Title;
                 NewShow.IsActive = show.IsActive;
 
@@ -135,25 +134,28 @@
             }
 
         }
+
+        //holt sich alle programme aus der db
         Programs = await ProgramService.GetAllProgramsAsync();
-        try
-        {
-            await LoadShows();
 
-        }
-        catch (Exception ex)
-        {
-
-        }
+        await LoadShows();
     }
 
+    /// <summary>
+    /// ruft alle shows aus db ab und ordnet diese mit der startzeit
+    /// </summary>
+    /// <returns></returns>
     private async Task LoadShows()
     {
         AllShows = (await ShowService.GetAllShowsAsync())
                         .OrderBy(s => s.DateStartTime).ToList();
     }
 
-    private async Task AddShow()
+    /// <summary>
+    /// add or edit show
+    /// </summary>
+    /// <returns></returns>
+    private async Task AddOrEditShow()
     {
         NewShow.DateStartTime = ShowStartDateTime;
         NewShow.DateEndTime = ShowEndDateTime;
@@ -176,7 +178,8 @@
                 IsActive = NewShow.IsActive
             };
 
-        var success = await ShowService.AddShowAsync(show);
+        //erfolgreich oder nicht
+        var success = await ShowService.AddOrEditShowAsync(show);
 
         if (success)
         {
@@ -198,11 +201,20 @@
         }
     }
 
+    /// <summary>
+    /// leitet auf diese seite inclusieve id weiter
+    /// </summary>
+    /// <param name="showId"></param>
     private void EditShow(int showId)
     {
         NavManager.NavigateTo($"/shows/{showId}");
     }
 
+    /// <summary>
+    /// Entfernt eine Show per id aus der db
+    /// </summary>
+    /// <param name="showId"></param>
+    /// <returns></returns>
     private async Task RemoveShow(int showId)
     {
         var removed = await ShowService.RemoveShowAsync(showId);

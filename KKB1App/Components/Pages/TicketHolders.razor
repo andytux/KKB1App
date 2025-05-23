@@ -80,21 +80,32 @@
             .ToList();
     }
 
+    /// <summary>
+    /// Setzt die id falls eine show im select ausgewählt wurde
+    /// </summary>
+    /// <param name="e"></param>
+    /// <returns></returns>
     private async Task OnShowChanged(ChangeEventArgs e)
     {
         SelectedShowId = int.Parse(e.Value?.ToString() ?? "0");
 
         if (SelectedShowId > 0)
         {
+            //ruft alle käufer von tickets ab
             AllTicketHolders = await TicketHolderService.GetForShowAsync(SelectedShowId);
             StateHasChanged();
         }
     }
 
-    private decimal CalculateTicketPrice(Ticket t)
+    /// <summary>
+    /// berechnet den discount preis
+    /// </summary>
+    /// <param name="ticket"></param>
+    /// <returns>decimal</returns>
+    private decimal CalculateTicketPrice(Ticket ticket)
     {
-        var price = t.Show.TicketPrice;
-        var finalPrice = t.Discount switch
+        var price = ticket.Show.TicketPrice;
+        var finalPrice = ticket.Discount switch
         {
             TicketDiscount.Student => price * 0.5m,
             TicketDiscount.Pupil => price * 0.5m,

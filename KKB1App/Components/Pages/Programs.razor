@@ -159,6 +159,7 @@
 
     private async Task AddProgram()
     {
+        //überprüft ob ein titel eingegebn wurde oder ein künstler ausgewählt wurde
         if (string.IsNullOrWhiteSpace(NewProgram.Title) || NewProgram.ArtistId == 0)
         {
             Message = "Bitte alle Felder korrekt ausfüllen.";
@@ -166,7 +167,7 @@
             return;
         }
 
-        await ProgramService.AddProgramAsync(NewProgram);
+        await ProgramService.AddOrEditProgramAsync(NewProgram);
 
         Message = "Programm erfolgreich hinzugefügt.";
         IsSuccess = true;
@@ -179,14 +180,25 @@
                 PaymentMode = Enums.PaymentMode.Prepaid
             };
 
+
+        //ruft alle programm aus der db ab
         AllPrograms = await ProgramService.GetAllProgramsAsync();
     }
 
+    /// <summary>
+    /// Leitet nochmal auf diese seite aber mit der id
+    /// </summary>
+    /// <param name="programId"></param>
     private void EditProgram(int programId)
     {
         NavManager.NavigateTo($"/programs/{programId}");
     }
 
+    /// <summary>
+    /// Entfernt ein program per id aus der db
+    /// </summary>
+    /// <param name="programId"></param>
+    /// <returns></returns>
     private async Task RemoveProgram (int programId)
     {
         var removed = await ProgramService.RemoveProgramByIdAsync(programId);
