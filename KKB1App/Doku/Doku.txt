@@ -6,88 +6,91 @@ Technologien: .NET 8 / Blazor Server / EF Core / SQL Server
 Version: 1.0
 
 1. Zielsetzung
-Die Anwendung KKBApp dient zur digitalen Verwaltung von Kulturveranstaltungen mit Shows, Programmen und Ticketverkauf.
-Admins können Künstler und Programme anlegn, Vorstellungen planen sowie Tickets mit Sitzplatzverwaltung verkaufen.
-Ziel ist ein durchgängigre digitaler Ablauf für Veranstalter mit direkter statistischer Auswertung.
+	Die Anwendung KKBApp dient zur digitalen Verwaltung von Kulturveranstaltungen mit Shows, Programmen und Ticketverkauf.
+	Admins können Künstler und Programme anlegn, Vorstellungen planen sowie Tickets mit Sitzplatzverwaltung verkaufen.
+	Ziel ist ein durchgängigre digitaler Ablauf für Veranstalter mit direkter statistischer Auswertung.
 
 2. Designdokumentation
    2.1 Fachliche Anforderungen
-	- Benutzerregistrierung und Login mit Hashing
-	- Anlegen und Bearbeiten von Programmen mit Laufzeit und Honorar
-	- Planung von Vorstellungen mit Datum, Uhrzeit, Preis, Status
-	- Sitzplatzgenauer Ticketverkauf inkl. Ermäßigungen
-	- Auswertung über verkaufte Tickets und Erlöse pro Show/Programm
+		- Benutzerregistrierung und Login mit Hashing
+		- Anlegen und Bearbeiten von Programmen mit Laufzeit und Honorar
+		- Planung von Vorstellungen mit Datum, Uhrzeit, Preis, Status
+		- Sitzplatzgenauer Ticketverkauf inkl. Ermäßigungen
+		- Auswertung über verkaufte Tickets und Erlöse pro Show/Programm
 
    2.2 Datenmodell   
 	Tabellen: User, Artist, Program, Show, Ticket, TicketHolder
-	Beziehungen:
-	- Artist 1:n Program
-	- Program 1:n Show
-	- Show 1:n Ticket
-	- Ticket 1:1 TicketHolder
+		Beziehungen:
+		- Artist 1:n Program
+		- Program 1:n Show
+		- Show 1:n Ticket
+		- Ticket 1:1 TicketHolder
 
    2.3 Projektentscheidungen   
-	- Benutzerdefiniertes Authentifizierungssystem
-	- Kein Identity Framework – stattdessen SHA256-Hash mit GUID-Salt
-	- Session-Verwaltung über "ProtectedSessionStorage"
-	- Preisermäßigung beim Ticketkauf (Pupil/Student/Senior) in Statistik sichtbar
+		- Benutzerdefiniertes Authentifizierungssystem
+		- Kein Identity Framework – stattdessen SHA256-Hash mit GUID-Salt
+		- Session-Verwaltung über "ProtectedSessionStorage"
+		- Preisermäßigung beim Ticketkauf (Pupil/Student/Senior) in Statistik sichtbar
+
 3. Technische Dokumentation
    3.1 Architektur   
-	- Blazor Server mit Komponentenstruktur
-	- Entity Framework Core Code-First
-	- Services: AuthService, ShowService, ProgramService etc.
-	- Programmgesteuerte Endpunkte (Program.cs für "/statisticsapi/...")
+		- Blazor Server mit Komponentenstruktur
+		- Entity Framework Core Code-First
+		- Services: AuthService, ShowService, ProgramService etc.
+		- Programmgesteuerte Endpunkte (Program.cs für "/statisticsapi/...")
 
    3.2 Services   
-	- ArtistService / ProgramService: CRUD für Entitäten
-	- ShowService: Planung, Aktivitätsprüfung, Kollisionserkennung
-	- TicketService: Ticketverkauf mit Sitzplatzprüfung
-	- StatisticService: Umsatz-, Ticketzahl-, Zeit-Auswertungen
+		- ArtistService / ProgramService: CRUD für Entitäten
+		- ShowService: Planung, Aktivitätsprüfung, Kollisionserkennung
+		- TicketService: Ticketverkauf mit Sitzplatzprüfung
+		- StatisticService: Umsatz-, Ticketzahl-, Zeit-Auswertungen
 
    3.3 Fehlerbehandlung   
-	- Rückmeldungen über "InfoMessage"-Komponente farblich codiert
-	- Validierung von Terminkollisionen
-	- Fehlermeldung bei ungültigem Sitzplatz oder Loginfehler
+		- Rückmeldungen über "InfoMessage"-Komponente farblich codiert
+		- Validierung von Terminkollisionen
+		- Fehlermeldung bei ungültigem Sitzplatz oder Loginfehler
 
    3.4 Konfiguration   
-	- appsettings.json für SQL Connection
-	- Services registriert in Program.cs
+		- appsettings.json für SQL Connection
+		- Services registriert in Program.cs
 
    3.5 Zugriffsschutz   
-	- Loginpflicht für Seiten mit "ProtectedPage"
-	- Authentifizierungsstatus via Session synchronisiert
+		- Loginpflicht für Seiten mit "ProtectedPage"
+		- Authentifizierungsstatus via Session synchronisiert
+
 4. Schnittstellen
    4.1 Interne Schnittstellen   
-	- Services mit async Methoden
-	- ViewModels wie ShowVM, TicketSaleVM, ProgramStatisticsVM
+		- Services mit async Methoden
+		- ViewModels wie ShowVM, TicketSaleVM, ProgramStatisticsVM
 
    4.2 Externe Schnittstellen   
-	- API "/statisticsapi/programs" für Diagramme
-	- API "/statisticsapi/topseller" für meistverkauftes Programm
+		- API "/statisticsapi/programs" für Diagramme
+		- API "/statisticsapi/topseller" für meistverkauftes Programm
+
 5. Tests & Validierung
-| Testfall                         | Erwartung                                              |
-|----------------------------------|--------------------------------------------------------|
-| Login korrekt                    | Weiterleitung zur Startseite                           |
-| Login falsch                     | Anzeige einer Fehlermeldung                            |
-| Registrierung                    | Weiterleitung zu Login mit Erfolgsnachricht            |
-| Ticketverkauf für besetzten Sitz | Fehlermeldung                                          |
-| Showzeit überschneidet sich      | Show wird nicht gespeichert                            |
-| Ermäßigungsanzeige aktiv         | Preisberechnung im UI sichtbar                         |
-| Programmende überschritten       | Show wird automatisch deaktiviert                      |
+	| Testfall                         | Erwartung                                              |
+	|----------------------------------|--------------------------------------------------------|
+	| Login korrekt                    | Weiterleitung zur Startseite                           |
+	| Login falsch                     | Anzeige einer Fehlermeldung                            |
+	| Registrierung                    | Weiterleitung zu Login mit Erfolgsnachricht            |
+	| Ticketverkauf für besetzten Sitz | Fehlermeldung                                          |
+	| Showzeit überschneidet sich      | Show wird nicht gespeichert                            |
+	| Ermäßigungsanzeige aktiv         | Preisberechnung im UI sichtbar                         |
+	| Programmende überschritten       | Show wird automatisch deaktiviert                      |
 
 6. W-Fragen
-   Was?    Eine Verwaltungsplattform für Kulturveranstaltungen mit Künstlern, Programmen und Shows.
+	   Was?    Eine Verwaltungsplattform für Kulturveranstaltungen mit Künstlern, Programmen und Shows.
 
-   Warum?    Um manuelle Verwaltung durch ein digitales Tool zu ersetzen.
+	   Warum?    Um manuelle Verwaltung durch ein digitales Tool zu ersetzen.
 
-   Wie?    Blazor + .NET + EF Core mit Komponentendesign, DB-Integration und API-Auswertung.
+	   Wie?    Blazor + .NET + EF Core mit Komponentendesign, DB-Integration und API-Auswertung.
 
-   Wann?    Für laufende Programmplanung, Ticketverkauf und Statistikanalyse.
+	   Wann?    Für laufende Programmplanung, Ticketverkauf und Statistikanalyse.
 
-   Wer?    Kulturveranstalter/Admins, Gäste (Passiv bei Ticketverkauf).
+	   Wer?    Kulturveranstalter/Admins, Gäste (Passiv bei Ticketverkauf).
 7. Technologien
-- Visual Studio 2022
-- .NET 8 SDK
-- Blazor Server
-- Entity Framework Core 9
-- SQL Server LocalDB
+		- Visual Studio 2022
+		- .NET 8 SDK
+		- Blazor Server
+		- Entity Framework Core 9
+		- SQL Server LocalDB
